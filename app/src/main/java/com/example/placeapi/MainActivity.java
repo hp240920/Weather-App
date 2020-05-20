@@ -5,9 +5,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.Status;
@@ -17,13 +19,23 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+
 import java.util.Objects;
+
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
     EditText place_text;
+    TextView display;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +43,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         place_text = findViewById(R.id.place_text);
+        display = findViewById(R.id.display);
 
         Places.initialize(getApplicationContext(), "AIzaSyCeiT6TyJQoBPHtgcU_ymy1-_JIumuQHOU");
+
 
         place_text.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -54,14 +68,60 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 100 && resultCode == RESULT_OK){
             Place place = Autocomplete.getPlaceFromIntent(data);
+
             String str = Objects.requireNonNull(place.getAddressComponents()).asList().get(0).getName() + ", " +
                     place.getAddressComponents().asList().get(2).getName() + ", " +
                     place.getAddressComponents().asList().get(3).getName();
             place_text.setText(str);
+
+
+            GetWeather weather = new GetWeather();
+            try {
+
+                String placename = str;
+		String toExecute = "http://api.openweathermap.org/data/2.5/weather?q="+placename+"&appid=516fd01c95c4deb1256b50104ca31a73&lang=en-US";
+               	String result =  weather.execute(toExecute).get();
+                display.setText(result);
+
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }else if(resultCode == AutocompleteActivity.RESULT_ERROR){
             Status status = Autocomplete.getStatusFromIntent(data);
-
             Toast.makeText(getApplicationContext(), status.getStatusMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public class GetWeather extends AsyncTask<String, Void, String >{
+
+        URL url;
+        String result = "";
+        HttpURLConnection httpURLConnection = null;
+        @Override
+        protected String doInBackground(String... urls) {
+
+            try {
+                url = new URL(urls[0]);
+                httpURLConnection = (HttpURLConnection)url.openConnection();
+                InputStream inputStream = httpURLConnection.getInputStream();
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                int data  = inputStreamReader.read();
+
+                while(data != -1){
+                    char current = (char)data;
+                    result += current;
+                    data = inputStreamReader.read();
+                }
+                return result;
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
 }
