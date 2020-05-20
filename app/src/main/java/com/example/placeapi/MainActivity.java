@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -17,6 +18,10 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         place_text = findViewById(R.id.place_text);
         display = findViewById(R.id.display);
 
-        Places.initialize(getApplicationContext(), "AIzaSyCziei7XSSTXuo2oL83j2ZmbvMI4llKQig");
+        Places.initialize(getApplicationContext(), "AIzaSyCeiT6TyJQoBPHtgcU_ymy1-_JIumuQHOU");
 
         place_text.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -69,9 +74,8 @@ public class MainActivity extends AppCompatActivity {
             try {
 
                 String placename = place.getName();
-               String result =  weather.execute("http://api.openweathermap.org/data/2.5/weather?q="+placename+"&appid=516fd01c95c4deb1256b50104ca31a73&lang=en-US").get();
-                display.setText(result);
-
+                String toExecute = "http://api.openweathermap.org/data/2.5/weather?q="+placename+"&appid=516fd01c95c4deb1256b50104ca31a73&lang=en-US";
+               String result =  weather.execute(toExecute).get();
             } catch (ExecutionException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -114,5 +118,54 @@ public class MainActivity extends AppCompatActivity {
             }
             return null;
         }
+
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            try {
+
+                JSONObject jsonObject = new JSONObject(result);
+
+                String weatherInfo = jsonObject.getString("weather");
+                String main = jsonObject.getString("main");
+
+                JSONArray arr = new JSONArray(weatherInfo);
+                JSONObject arr2 = new JSONObject(main);
+
+                String toDisplay = "";
+
+                for (int i = 0; i < arr.length(); i++) {
+
+                    JSONObject jsonPart = arr.getJSONObject(i);
+
+                    String mainStr = jsonPart.getString("main");
+                    String weather_des = jsonPart.getString("description");
+
+                    toDisplay += " Weather :"+ mainStr + " \n Weather description : " + weather_des;
+
+                }
+
+
+                    String weather_temp =arr2.getString("temp");
+                    String weather_feels_like = arr2.getString("feels_like");
+                    String weather_min = arr2.getString("temp_min");
+                    String weather_max =arr2.getString("temp_max");
+                    String weather_pressure =arr2.getString("pressure");
+                    String weather_humidity =arr2.getString("humidity");
+
+                    toDisplay += "\n Temperature " + weather_temp + "\n Feels like :" + weather_feels_like + "\n Min "+ weather_min + " Max "+ weather_max
+                            + "\n Pressure " + weather_pressure + "\n Humidity :" + weather_humidity;
+
+
+                display.setText(toDisplay);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
+
+        }
+
     }
 }

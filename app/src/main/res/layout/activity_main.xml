@@ -28,6 +28,9 @@
         android:layout_height="477dp"
         android:layout_marginLeft="10px"
         android:layout_marginTop="50px"
-        android:layout_marginRight="10px" />
+        android:layout_marginRight="10px"
+        android:gravity="center"
+        android:paddingTop="5px"
+        android:textStyle="bold" />
 
 </LinearLayout>
