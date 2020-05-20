@@ -3,6 +3,7 @@ package com.example.placeapi;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -18,6 +19,7 @@ import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,12 +32,12 @@ public class MainActivity extends AppCompatActivity {
 
         place_text = findViewById(R.id.place_text);
 
-        Places.initialize(getApplicationContext(), "AIzaSyDx0wbB2J6RkO03psz42ZHYJYgrXHtOxwg");
+        Places.initialize(getApplicationContext(), "AIzaSyCeiT6TyJQoBPHtgcU_ymy1-_JIumuQHOU");
 
         place_text.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                List<Place.Field> fieldList = Arrays.asList(Place.Field.ID, Place.Field.NAME);
+                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS_COMPONENTS, Place.Field.NAME);
 
                 Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY,
                         fieldList).build(MainActivity.this);
@@ -46,13 +48,16 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 100 && resultCode == RESULT_OK){
             Place place = Autocomplete.getPlaceFromIntent(data);
-
-            place_text.setText(place.getName());
+            String str = Objects.requireNonNull(place.getAddressComponents()).asList().get(0).getName() + ", " +
+                    place.getAddressComponents().asList().get(2).getName() + ", " +
+                    place.getAddressComponents().asList().get(3).getName();
+            place_text.setText(str);
         }else if(resultCode == AutocompleteActivity.RESULT_ERROR){
             Status status = Autocomplete.getStatusFromIntent(data);
 
